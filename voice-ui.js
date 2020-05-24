@@ -29,12 +29,12 @@
         });
 
         // Define prompts.
-        const WelcomePrompt = "Hello. You can ask me questions about this WebXR. Would you like me to describe the scene? ";
+        const WelcomePrompt = "Hello. Do you want me to tell you about this WebXR scene? ";
         const Prompt = "What else do you want to know? ";
         const RePrompt = "Ask for help if you're not sure. ";
-        const GoodbyePrompt = "Goodbye! ";
-        const ErrorPrompt = "I'm sorry, I didn't understand that. Please try again. ";
-        const HelpPrompt = "You can ask me to describe the scene, how many things there are, what colour an object is, or tell me to stop. What do you want to know? ";
+        const GoodbyePrompt = "OK. Goodbye! ";
+        const ErrorPrompt = "I'm sorry, I didn't understand that. Please say it again. ";
+        const HelpPrompt = "You can ask me to describe the scene, ask me how many things there are or what colour something is, or tell me to stop when you've had enough. What do you want me to tell you? ";
 
         // Check for SpeechRecognition support.
         if (!("webkitSpeechRecognition" in window)) {
@@ -82,10 +82,10 @@
                     let transcriptBits = transcript.split(" ");
                     display.innerText = transcript + " Word: " + transcriptBits[1];
 
-                    if (transcript.includes("yes") || transcript.includes("describe")) {
+                    if (transcriptBits.includes("yes") || transcriptBits.includes("describe") || transcriptBits.includes("tell me about")) {
                         describeScene();
                     }
-                    else if (transcript.includes("how many")) {
+                    else if (transcriptBits.includes("how many")) {
                         let objType;
 
                         for (i = 0; i < transcriptBits.length; i++) {
@@ -97,7 +97,7 @@
                         }
 
                     }
-                    else if (transcript.includes("what colour") || transcript.includes("what color")) {
+                    else if (transcriptBits.includes("colour") || transcriptBits.includes("color")) {
                         let objColour;
 
                         for (i = 0; i < transcriptBits.length; i++) {
@@ -109,11 +109,11 @@
 
                         }
                     }
-                    else if (transcript.includes("help") || transcript.includes("don't know")) {
+                    else if (transcriptBits.includes("help")) {
                         utterance.text = HelpPrompt;
                         window.speechSynthesis.speak(utterance);
                     }
-                    else if (transcript.includes("no")) {
+                    else if (transcriptBits.includes("no")) {
                         if (firstResponse) {
                             firstResponse = false;
                             utterance.text = "OK. " + Prompt + RePrompt;
@@ -123,7 +123,7 @@
                         }
                         window.speechSynthesis.speak(utterance);
                     }
-                    else if (transcript.includes("quit") || transcript.includes("stop") || transcript.includes("cancel") || transcript.includes("nothing")) {
+                    else if (transcriptBits.includes("quit") || transcriptBits.includes("stop") || transcriptBits.includes("cancel") || transcriptBits.includes("nothing")) {
                         quit = true;
                         recognition.stop();
 
