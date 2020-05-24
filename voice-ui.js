@@ -6,6 +6,7 @@
         var button = document.getElementById("button");
         var display = document.getElementById("display");
         var quit = false;
+        var firstResponse = true;
 
         // Get HTML elements.
         var sceneElements = Array.from(document.getElementById("scene").children);
@@ -27,12 +28,13 @@
             return element;
         });
 
-        // Define standard responses.
-        const WelcomePrompt = "Hello. Would you like me to describe the scene?";
-        const RePrompt = "OK. What do you want to know? You can ask for help if you're not sure.";
-        const GoodbyePrompt = "Goodbye!";
-        const ErrorPrompt = "I'm sorry, I didn't understand that. Please try again.";
-        const HelpPrompt = "You can ask me to describe the scene, or how many things there are, or what colour an object is. What do you want to know?";
+        // Define prompts.
+        const WelcomePrompt = "Hello. Would you like me to describe the scene? ";
+        const Prompt = "What else do you want to know? ";
+        const RePrompt = "Ask for help if you're not sure. ";
+        const GoodbyePrompt = "Goodbye! ";
+        const ErrorPrompt = "I'm sorry, I didn't understand that. Please try again. ";
+        const HelpPrompt = "You can ask me to describe the scene, how many things there are, what colour an object is, or tell me to stop. What do you want to know? ";
 
         // Check for SpeechRecognition support.
         if (!("webkitSpeechRecognition" in window)) {
@@ -61,7 +63,7 @@
         recognition.onend = function () {
             display.innerText = "Recognition stopped.";
 
-            if (quit === false) {
+            if (!quit) {
                 recognition.start();
             }
         };
@@ -151,8 +153,18 @@
                 }
             }
 
-            response += "and " + sceneObjects[sceneObjects.length - 1] + "."; console.log(response);
+            response += "and " + sceneObjects[sceneObjects.length - 1] + ". ";
+
+            if (firstResponse) {
+                firstResponse = false;
+                response += Prompt + RePrompt;
+            }
+            else {
+                response += Prompt;
+            }
+
             utterance.text = response;
+
             window.speechSynthesis.speak(utterance);
         }
 
