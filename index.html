@@ -1,22 +1,30 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html Lang="en">
 
 <head>
-<meta charset="utf-8">
-<title>Experiment</title>
+    <meta charset="utf-8">
+    <title>VoiceXR experiment</title>
 
-<script src="voice-ui.js"></script>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="voice-ui.js"></script>
 </head>
 
 <body>
-<h1>Experiment</h1>
+    <h1>VoiceXR experiment</h1>
 
-<div>
-<button id="button" aria-pressed="false">Talk</button>
-</div>
+    <div>
+        <button id="button" aria-pressed="false">Talk</button>
+    </div>
 
-<div id="display" aria-live="assertive"></div>
+    <div id="display" aria-live="assertive"></div>
+
+    <a-scene id="scene">
+        <a-sphere radius="3" color="white" position="4 3 -10"></a-sphere>
+        <a-box color="red" position="0 2 -5" rotation="0 45 45" scale="2 2 2"></a-box>
+        <a-sky color="purple"></a-sky>
+        <a-plane color="green" rotation="-90 0 0" width="30" height="30"></a-plane>
+    </a-scene>
 
 </body>
 </html>
