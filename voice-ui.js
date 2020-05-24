@@ -29,7 +29,7 @@
         });
 
         // Define prompts.
-        const WelcomePrompt = "Hello. Would you like me to describe the scene? ";
+        const WelcomePrompt = "Hello. You can ask me questions about this WebXR. Would you like me to describe the scene? ";
         const Prompt = "What else do you want to know? ";
         const RePrompt = "Ask for help if you're not sure. ";
         const GoodbyePrompt = "Goodbye! ";
@@ -75,33 +75,30 @@
                 return;
             }
 
-            var i;
-            for (i = event.resultIndex; i < event.results.length; ++i) {
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
 
                 if (event.results[i].isFinal) {
-                    var transcript = event.results[i][0].transcript;
-                    var transcriptBits = transcript.split(" ");
+                    let transcript = event.results[i][0].transcript;
+                    let transcriptBits = transcript.split(" ");
                     display.innerText = transcript + " Word: " + transcriptBits[1];
 
                     if (transcript.includes("yes") || transcript.includes("describe")) {
                         describeScene();
                     }
                     else if (transcript.includes("how many")) {
-
-                        var objType;
+                        let objType;
 
                         for (i = 0; i < transcriptBits.length; i++) {
                             objType = transcriptBits[i];
 
-                            if (objType === "things" || objType === "objects" || objType === "balls" || objType === "spheres" || objType === "cubes" || objType === "boxes") {
+                            if (objType === "things" || objType === "objects" || objType === "spheres" || objType === "cubes") {
                                 countObjects(objType);
                             }
-
                         }
 
                     }
                     else if (transcript.includes("what colour") || transcript.includes("what color")) {
-                        var objColour;
+                        let objColour;
 
                         for (i = 0; i < transcriptBits.length; i++) {
                             objType = transcriptBits[i];
@@ -112,15 +109,21 @@
 
                         }
                     }
-                    else if (transcript.includes("help")) {
+                    else if (transcript.includes("help") || transcript.includes("don't know")) {
                         utterance.text = HelpPrompt;
                         window.speechSynthesis.speak(utterance);
                     }
                     else if (transcript.includes("no")) {
-                        utterance.text = RePrompt;
+                        if (firstResponse) {
+                            firstResponse = false;
+                            utterance.text = "OK. " + Prompt + RePrompt;
+                        }
+                        else {
+                            utterance.text = "OK. " + Prompt;
+                        }
                         window.speechSynthesis.speak(utterance);
                     }
-                    else if (transcript.includes("quit") || transcript.includes("stop") || transcript.includes("cancel")) {
+                    else if (transcript.includes("quit") || transcript.includes("stop") || transcript.includes("cancel") || transcript.includes("nothing")) {
                         quit = true;
                         recognition.stop();
 
@@ -140,7 +143,7 @@
         }
 
         function describeScene() {
-            var response = "The scene contains ";
+            let response = "The scene contains ";
 
             for (let i = 0; i < sceneObjects.length - 1; i++) {
                 let objType = sceneObjects[i];
@@ -164,7 +167,6 @@
             }
 
             utterance.text = response;
-
             window.speechSynthesis.speak(utterance);
         }
 
