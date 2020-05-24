@@ -1,291 +1,180 @@
 (function () {
-"use strict";
+    "use strict";
 
-function init() {
+    function init() {
 
-var button = document.getElementById("button");
-var display = document.getElementById("display");
-var quit = false;
+        var button = document.getElementById("button");
+        var display = document.getElementById("display");
+        var quit = false;
 
-const WelcomePrompt = "Hello. Would you like me to describe the scene?";
-const RePrompt = "OK. What do you want to know? You can ask for help if you're not sure.";
-const GoodbyePrompt = "Goodbye!";
-const ErrorPrompt = "I'm sorry, I didn't understand that. Please try again.";
-const HelpPrompt = "You can ask me to describe the scene, or how many things there are, or what colour an object is. What do you want to know?";
+        // Get HTML elements.
+        var sceneElements = Array.from(document.getElementById("scene").children);
 
-// Check for SpeechRecognition support.
-if (!("webkitSpeechRecognition" in window)) {
-alert("This browser does not support the Web Speech API SpeechRecognition interface.");
-}
-else {
-var recognition = new webkitSpeechRecognition();
-recognition.continuous = true;
-recognition.interimResults = false;
-recognition.lang = "en";
-recognition.maxAlternatives = 1;
-}
+        // Filter unwanted elements; convert remaining elements into usable format.
+        var sceneObjects = sceneElements.filter(
+            element => element.tagName != "CANVAS" && element.tagName != "DIV" && element.tagName != "A-ENTITY"
+        ).map(function (element) {
+            element = element.tagName.slice(2).toLowerCase();
 
-// Check for SpeechSynthesis support.
-if (window.SpeechSynthesisUtterance === undefined) {
-alert("This browser does not support the Web Speech API SpeechSynthesis interface.");
-}
-else {
-var utterance = new SpeechSynthesisUtterance();
-}
+            if (element === "plane") {
+                element = "ground";
+            }
 
-recognition.onstart = function () {
-display.innerText = "Recognition started";
-};
+            if (element === "box") {
+                element = "cube";
+            }
 
-recognition.onend = function () {
-display.innerText = "Recognition stopped.";
+            return element;
+        });
 
-if (quit === false) {
-recognition.start();
-}
-};
+        // Define standard responses.
+        const WelcomePrompt = "Hello. Would you like me to describe the scene?";
+        const RePrompt = "OK. What do you want to know? You can ask for help if you're not sure.";
+        const GoodbyePrompt = "Goodbye!";
+        const ErrorPrompt = "I'm sorry, I didn't understand that. Please try again.";
+        const HelpPrompt = "You can ask me to describe the scene, or how many things there are, or what colour an object is. What do you want to know?";
 
-recognition.onresult = function (event) {
+        // Check for SpeechRecognition support.
+        if (!("webkitSpeechRecognition" in window)) {
+            alert("This browser does not support the Web Speech API SpeechRecognition interface.");
+        }
+        else {
+            var recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = "en";
+            recognition.maxAlternatives = 1;
+        }
 
-if (typeof (event.results) === "undefined") {
-recognition.stop();
-return;
-}
+        // Check for SpeechSynthesis support.
+        if (window.SpeechSynthesisUtterance === undefined) {
+            alert("This browser does not support the Web Speech API SpeechSynthesis interface.");
+        }
+        else {
+            var utterance = new SpeechSynthesisUtterance();
+        }
 
-var i;
-for (i = event.resultIndex; i < event.results.length; ++i) {
+        recognition.onstart = function () {
+            display.innerText = "Recognition started";
+        };
 
-if (event.results[i].isFinal) {
-var transcript = event.results[i][0].transcript;
-var transcriptBits = transcript.split(" ");
-display.innerText = transcript + " Word: " + transcriptBits[1];
+        recognition.onend = function () {
+            display.innerText = "Recognition stopped.";
 
-if (transcript.includes("yes") || transcript.includes("describe")) {
-describeScene();
-}
-else if (transcript.includes("how many")) {
+            if (quit === false) {
+                recognition.start();
+            }
+        };
 
-var objType;
+        recognition.onresult = function (event) {
 
-for (i = 0; i < transcriptBits.length; i++) {
-objType = transcriptBits[i];
+            if (typeof (event.results) === "undefined") {
+                recognition.stop();
+                return;
+            }
 
-if (objType === "things" || objType === "objects" || objType === "balls" || objType === "spheres" || objType === "cubes" || objType === "boxes") {
-countObjects(objType);
-}
+            var i;
+            for (i = event.resultIndex; i < event.results.length; ++i) {
 
-}
+                if (event.results[i].isFinal) {
+                    var transcript = event.results[i][0].transcript;
+                    var transcriptBits = transcript.split(" ");
+                    display.innerText = transcript + " Word: " + transcriptBits[1];
 
-}
-else if (transcript.includes("what colour") || transcript.includes("what color")) {
-var objColour;
+                    if (transcript.includes("yes") || transcript.includes("describe")) {
+                        describeScene();
+                    }
+                    else if (transcript.includes("how many")) {
 
-for (i = 0; i < transcriptBits.length; i++) {
-objType = transcriptBits[i];
+                        var objType;
 
-if (objType === "balls" || objType === "ball" || objType === "spheres" || objType === "sphere" || objType === "cubes" || objType === "cube" || objType === "boxes" || objType === "box") {
-objectColour(objType);
-}
+                        for (i = 0; i < transcriptBits.length; i++) {
+                            objType = transcriptBits[i];
 
-}
-}
-else if (transcript.includes("help")) {
-utterance.text = HelpPrompt;
-window.speechSynthesis.speak(utterance);
-}
-else if (transcript.includes("no")) {
-utterance.text = RePrompt;
-window.speechSynthesis.speak(utterance);
-}
-else if (transcript.includes("quit") || transcript.includes("stop") || transcript.includes("cancel")) {
-quit = true;
-recognition.stop();
+                            if (objType === "things" || objType === "objects" || objType === "balls" || objType === "spheres" || objType === "cubes" || objType === "boxes") {
+                                countObjects(objType);
+                            }
 
-utterance.text = GoodbyePrompt;
-window.speechSynthesis.speak(utterance);
-}
-else {
-utterance.text = ErrorPrompt;
-window.speechSynthesis.speak(utterance);
+                        }
 
-}
-}
-else {
-display.innerText = "interim results: " + event.results[i][0].transcript;
-}
-}
-}
+                    }
+                    else if (transcript.includes("what colour") || transcript.includes("what color")) {
+                        var objColour;
 
-function describeScene() {
-utterance.text = "This will describe the scene and what's in it.";
-window.speechSynthesis.speak(utterance);
-}
+                        for (i = 0; i < transcriptBits.length; i++) {
+                            objType = transcriptBits[i];
 
-function countObjects(objType) {
-utterance.text = "You asked how many " + objType + " there are.";
-window.speechSynthesis.speak(utterance);
-}
+                            if (objType === "balls" || objType === "ball" || objType === "spheres" || objType === "sphere" || objType === "cubes" || objType === "cube" || objType === "boxes" || objType === "box") {
+                                objectColour(objType);
+                            }
 
-function objectColour(objType) {
-utterance.text = "You asked what colour the " + objType + " is.";
-window.speechSynthesis.speak(utterance);
-}
+                        }
+                    }
+                    else if (transcript.includes("help")) {
+                        utterance.text = HelpPrompt;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                    else if (transcript.includes("no")) {
+                        utterance.text = RePrompt;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                    else if (transcript.includes("quit") || transcript.includes("stop") || transcript.includes("cancel")) {
+                        quit = true;
+                        recognition.stop();
 
-button.addEventListener("click", () => {
-utterance.text = WelcomePrompt;
-window.speechSynthesis.speak(utterance);
-recognition.start();
-});
-};
+                        utterance.text = GoodbyePrompt;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                    else {
+                        utterance.text = ErrorPrompt;
+                        window.speechSynthesis.speak(utterance);
 
-document.addEventListener("DOMContentLoaded", function () {
-init();
-});
+                    }
+                }
+                else {
+                    display.innerText = "interim results: " + event.results[i][0].transcript;
+                }
+            }
+        }
 
+        function describeScene() {
+            var response = "The scene contains ";
 
-})();(function () {
-"use strict";
+            for (let i = 0; i < sceneObjects.length - 1; i++) {
+                let objType = sceneObjects[i];
 
-function init() {
+                if (objType !== "sky" && objType !== "ground") {
+                    response += "a " + sceneObjects[i] + ", ";
+                }
+                else {
+                    response += "the " + sceneObjects[i] + ", ";
+                }
+            }
 
-var button = document.getElementById("button");
-var display = document.getElementById("display");
-var quit = false;
+            response += "and " + sceneObjects[sceneObjects.length - 1] + "."; console.log(response);
+            utterance.text = response;
+            window.speechSynthesis.speak(utterance);
+        }
 
-const WelcomePrompt = "Hello. Would you like me to describe the scene?";
-const RePrompt = "OK. What do you want to know? You can ask for help if you're not sure.";
-const GoodbyePrompt = "Goodbye!";
-const ErrorPrompt = "I'm sorry, I didn't understand that. Please try again.";
-const HelpPrompt = "You can ask me to describe the scene, or how many things there are, or what colour an object is. What do you want to know?";
+        function countObjects(objType) {
+            utterance.text = "You asked how many " + objType + " there are.";
+            window.speechSynthesis.speak(utterance);
+        }
 
-// Check for SpeechRecognition support.
-if (!("webkitSpeechRecognition" in window)) {
-alert("This browser does not support the Web Speech API SpeechRecognition interface.");
-}
-else {
-var recognition = new webkitSpeechRecognition();
-recognition.continuous = true;
-recognition.interimResults = false;
-recognition.lang = "en";
-recognition.maxAlternatives = 1;
-}
+        function objectColour(objType) {
+            utterance.text = "You asked what colour the " + objType + " is.";
+            window.speechSynthesis.speak(utterance);
+        }
 
-// Check for SpeechSynthesis support.
-if (window.SpeechSynthesisUtterance === undefined) {
-alert("This browser does not support the Web Speech API SpeechSynthesis interface.");
-}
-else {
-var utterance = new SpeechSynthesisUtterance();
-}
+        button.addEventListener("click", () => {
+            utterance.text = WelcomePrompt;
+            window.speechSynthesis.speak(utterance);
+            recognition.start();
+        });
+    };
 
-recognition.onstart = function () {
-display.innerText = "Recognition started";
-};
-
-recognition.onend = function () {
-display.innerText = "Recognition stopped.";
-
-if (quit === false) {
-recognition.start();
-}
-};
-
-recognition.onresult = function (event) {
-
-if (typeof (event.results) === "undefined") {
-recognition.stop();
-return;
-}
-
-var i;
-for (i = event.resultIndex; i < event.results.length; ++i) {
-
-if (event.results[i].isFinal) {
-var transcript = event.results[i][0].transcript;
-var transcriptBits = transcript.split(" ");
-display.innerText = transcript + " Word: " + transcriptBits[1];
-
-if (transcript.includes("yes") || transcript.includes("describe")) {
-describeScene();
-}
-else if (transcript.includes("how many")) {
-
-var objType;
-
-for (i = 0; i < transcriptBits.length; i++) {
-objType = transcriptBits[i];
-
-if (objType === "things" || objType === "objects" || objType === "balls" || objType === "spheres" || objType === "cubes" || objType === "boxes") {
-countObjects(objType);
-}
-
-}
-
-}
-else if (transcript.includes("what colour") || transcript.includes("what color")) {
-var objColour;
-
-for (i = 0; i < transcriptBits.length; i++) {
-objType = transcriptBits[i];
-
-if (objType === "balls" || objType === "ball" || objType === "spheres" || objType === "sphere" || objType === "cubes" || objType === "cube" || objType === "boxes" || objType === "box") {
-objectColour(objType);
-}
-
-}
-}
-else if (transcript.includes("help")) {
-utterance.text = HelpPrompt;
-window.speechSynthesis.speak(utterance);
-}
-else if (transcript.includes("no")) {
-utterance.text = RePrompt;
-window.speechSynthesis.speak(utterance);
-}
-else if (transcript.includes("quit") || transcript.includes("stop") || transcript.includes("cancel")) {
-quit = true;
-recognition.stop();
-
-utterance.text = GoodbyePrompt;
-window.speechSynthesis.speak(utterance);
-}
-else {
-utterance.text = ErrorPrompt;
-window.speechSynthesis.speak(utterance);
-
-}
-}
-else {
-display.innerText = "interim results: " + event.results[i][0].transcript;
-}
-}
-}
-
-function describeScene() {
-utterance.text = "This will describe the scene and what's in it.";
-window.speechSynthesis.speak(utterance);
-}
-
-function countObjects(objType) {
-utterance.text = "You asked how many " + objType + " there are.";
-window.speechSynthesis.speak(utterance);
-}
-
-function objectColour(objType) {
-utterance.text = "You asked what colour the " + objType + " is.";
-window.speechSynthesis.speak(utterance);
-}
-
-button.addEventListener("click", () => {
-utterance.text = WelcomePrompt;
-window.speechSynthesis.speak(utterance);
-recognition.start();
-});
-};
-
-document.addEventListener("DOMContentLoaded", function () {
-init();
-});
-
+    document.addEventListener("DOMContentLoaded", function () {
+        init();
+    });
 
 })();
