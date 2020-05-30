@@ -8,14 +8,23 @@
 
     <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
     <script src="voice-ui.js"></script>
+
+    <style>
+        #button-container {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+       }
+        #button-container #button {
+            font-family: sans-serif,monospace;
+            font-size: 20px;
+            font-weight: 200;
+        }
+    </style>
 </head>
 
 <body>
     <h1>VoiceXR experiment</h1>
-
-    <div>
-        <button id="button" aria-pressed="false">Talk</button>
-    </div>
 
     <div id="display" aria-live="assertive"></div>
 
@@ -25,6 +34,10 @@
         <a-sky color="purple"></a-sky>
         <a-plane color="green" rotation="-90 0 0" width="30" height="30"></a-plane>
     </a-scene>
+
+    <div id="button-container">
+        <button id="button" aria-pressed="false">Talk</button>
+    </div>
 
 </body>
 </html>
